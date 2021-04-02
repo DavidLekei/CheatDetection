@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <Windowsx.h>
 
+HWND leftButton;
+HWND rightButton;
+
+int recording;
+FILE* out;
+
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -28,8 +34,6 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
 {
     MSG  msg;    
     HWND WindowHandle;
-    HWND leftButton;
-    HWND rightButton;
     WNDCLASSW wc;
 
     wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -49,7 +53,10 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
                 100, 100, 800, 600, NULL, NULL, hInstance, NULL);  
 
     leftButton = createButton(WindowHandle, 10, 10);
-    rightButton = createButton(WindowHandle, 690, 10);
+    rightButton = createButton(WindowHandle, 680, 10);
+
+    printf("\nleftButton = %d", leftButton);
+    printf("\nrightButton = %d", rightButton);
 
     ShowWindow(WindowHandle, nCmdShow);
     UpdateWindow(WindowHandle);
@@ -66,21 +73,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR pCmdLine, int nCmdShow) {
 
     printf("\npCmdLine: %s", pCmdLine);
+    recording = 0;
     
     ezShowWindow(hInstance, nCmdShow);
 }
 
+void RecordMouseLocation(UINT msg, LPARAM lParam)
+{
+    short x = GET_X_LPARAM(lParam);
+    short y = GET_Y_LPARAM(lParam);
+
+    printf("\nX = %d Y = %d", x, y);
+}
+
+void StartRecordingMouse()
+{
+    out = fopen("MouseData.txt", "w+");
+
+    recording = 1;
+}
+
 void ButtonPressed(WPARAM wParam, LPARAM lParam)
 {
-    printf("\nButton was pressed!");
     DWORD id = LOWORD(wParam);
     DWORD code = HIWORD(wParam);
     if(code == BN_CLICKED)
     {
-        printf("\n***BN_CLICKED***");
+        if((int)lParam == (int)leftButton)
+        {
+            printf("\nLeft Button Pressed.");
+            EnableWindow(leftButton, FALSE);
+            EnableWindow(rightButton, TRUE);
+            StartRecordingMouse();
+        }
+        else if((int)lParam == (int)rightButton)
+        {
+            printf("\nRight Button Pressed.");
+            EnableWindow(rightButton, FALSE);
+            EnableWindow(leftButton, TRUE);
+        }
+        else
+        {
+            printf("\nUnknown Error.");
+            exit(0);
+        }
     }
-    //HANDLE button = lParam;
-    printf("\nID = %d code = %d", id, code);
 }
 
 void MouseDown(POINT* cursorPos)
@@ -113,14 +150,6 @@ void MouseClick()
 
 }
 
-void RecordMouseLocation(UINT msg, LPARAM lParam)
-{
-    short x = GET_X_LPARAM(lParam);
-    short y = GET_Y_LPARAM(lParam);
-
-    printf("\nX = %d Y = %d", x, y);
-}
-
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, 
     WPARAM wParam, LPARAM lParam) {
 
@@ -134,8 +163,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg,
         ButtonPressed(wParam, lParam);
         break;
       case WM_KEYUP:
+        printf("\nKEY UP");
         switch(wParam){
             case VK_SPACE:
+                printf("\nSPACEBAR");
                 MouseClick();
                 break;
         }
