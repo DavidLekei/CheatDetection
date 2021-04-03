@@ -3,91 +3,72 @@ import pandas as pd
 import numpy as np
 import os
 
-training_data = [ ]
-testing_data = [ ]
-
-def load_data_array(data, filename):
-	a = np.array([(0,0)])
+def load_data_array(data, labels, filename):
+	# a = np.array([(0,0)])
+	a = [ ]
 	with open(filename) as f:
 		for line in f:
 			line = line.strip('\n')
 			if(line != '/'):
 				nums = line.split(',')
-				t = [nums[0], nums[1]]
-				t = tuple(t)
-				a = np.append(a, t)
+				a.append(nums[1])
 			else:
-				data.append(a)
-				a = np.array([(0,0)])
-
-def load_data():
-	#data = tf.data.TFRecordDataset()
-	data = tf.data.Dataset.from_tensor_slices([(0, 1), (1, 2), (4, 7)])
-
-	column_names = ['x_coord', 'y_coord']
-
+				print('-----------------------------------------------')
+				print('a at the end of load_data_array')
+				print(a)
+				print('-----------------------------------------------')
+				data.append(np.asarray(a).astype(np.float32))
+				a.clear()
+				line = f.readline()
+				line = line.strip('\n')
+				labels.append(line)
+	data.append(np.asarray(a).astype(np.float32))
+	data.pop(0)
+	print('-----------------------------------------------')
+	print('Data at the end of load_data_array')
 	print(data)
+	print('-----------------------------------------------')
+	l = len(data)
 
-def run():
-	print('Running TensorFlow test')
-	load_data()
 
 def test():
-	column_names = ['x_coord', 'y_coord', 'is_ai']
-	training_data = pd.read_csv('AI_MouseData.csv', names=column_names) 
-	testing_data = pd.read_csv('HUMAN_MouseData.csv', names=column_names)
+	training_data = [ ]
+	testing_data = [ ]
+	training_labels = [ ]
 
-	feature_names = column_names[:-1]
-	label_names = column_names[-1]
-	
-	batch_size = 2
+	class_labels = ['human', 'ai']
 
-	train_dataset = tf.data.experimental.make_csv_dataset(
-		'AI_MouseData.csv',
-		batch_size,
-		column_names=column_names,
-		label_name=label_names,
-		num_epochs=1
-	)
+	load_data_array(training_data, training_labels, 'TrainingData.csv');
 
-	features, labels = next(iter(train_dataset))
-	print(features)
-	#training_set = tf.data.Dataset.from_tensor_slices(training_data)
-	#testing_set = tf.data.Dataset.from_tensor_slices(testing_data)
-	#print(testing_data)
+	training_data = np.asarray(training_data)
+	training_labels = np.asarray(training_labels).astype(np.float32)
 
-	# train_set = tfdata_generator(training_data, is_training=True, batch_size=len(training_data))
-	# test_set = tfdata_generator(testing_data, is_training=False, batch_size=len(testing_data))
 
-	# print(training_data)
-	# print(testing_data)
 
-	# model = tf.keras.Sequential([
-	# 	tf.keras.layers.Dense(input_dim=2, units=128, activation="relu"),
-	# 	tf.keras.layers.Dense(units=64, activation="relu"),
-	# 	tf.keras.layers.Dropout(0.2),
-	# 	tf.keras.layers.Dense(units=32, activation="relu"),
-	# 	tf.keras.layers.Dropout(0.2),
-	# 	tf.keras.layers.Dense(units=32, activation="relu"),
-	# 	tf.keras.layers.Dropout(0.2),
-	# 	tf.keras.layers.Dense(units=16, activation="relu"),
-	# 	tf.keras.layers.Dropout(0.2),
-	# 	tf.keras.layers.Dense(units=1, activation="sigmoid")])
-	# model.summary()
+	print('Info')
+	print('-------------------------')
+	print('-------------------------')
+	print(training_data.shape)
+	print(type(training_data))
+	print(type(training_data[0]))
+	print(type(training_data[0][0]))
+	print('-------------------------')
+	print('-------------------------')
 
-	# metrics = [tf.keras.metrics.Accuracy(name="Accuracy"), tf.keras.metrics.Precision(name="Precision"), tf.keras.metrics.Recall(name="Recall")]
+	model = tf.keras.Sequential([
+		tf.keras.layers.Flatten(input_shape=(1, 57)),
+		tf.keras.layers.Dense(128, activation=tf.nn.relu),
+		tf.keras.layers.Dense(2, activation=tf.nn.softmax)
+	])
 
-	# model.compile(optimizer="adam", loss="binary_crossentropy", metrics=metrics)
-	# model.fit(training_data, batch_size=32,
-	# 						 steps_per_epoch=len(training_data),
-	#  						 epochs=100,
-	#  						 verbose=1)
+	model.compile(optimizer='adam',
+				  loss='sparse_categorical_crossentropy',
+				  metrics=['accuracy'])
+
+	model.fit(training_data, training_labels, epochs=5)
+
+
 	print("Evaluate on test data")
-	#score = model.evaluate(X_test, Y_test)
-	#print("test loss, test accuracy, test precision, test recall: ", score)
-	# load_data_array()
-	# for a in data:
-	# 	print('**********************************************\n', a, '\n*******************************************\n')
 	
 
 

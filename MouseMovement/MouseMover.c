@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windowsx.h>
+#include <time.h>
+#include <unistd.h>
 
 #define WINDOW_X 0
 #define WINDOW_Y 0

@@ -114,8 +114,6 @@ void RecordMouseLocation(UINT msg, LPARAM lParam)
 
     //fwrite(str, 1, sizeof(str), out);
     fprintf(out, "%s", str);
-    fputc(is_ai, labels);
-    fputc('\n', labels);
     printf("Coords: %s", str);
 }
 
@@ -132,6 +130,10 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
             EnableWindow(leftButton, FALSE);
             EnableWindow(rightButton, TRUE);
             recording = 1;
+            fputc('/', out);
+            fputc('\n', out);
+            fputc(is_ai, out);
+            fputc('\n', out);
         }
         else if((int)lParam == (int)rightButton)
         {
@@ -139,8 +141,6 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
             EnableWindow(rightButton, FALSE);
             EnableWindow(leftButton, TRUE);
             recording = 0;
-            fputc('/', out);
-            fputc('\n', out);
         }
         else
         {
