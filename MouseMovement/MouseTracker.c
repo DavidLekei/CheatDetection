@@ -3,15 +3,25 @@
 #include <stdlib.h>
 #include <windowsx.h>
 
+#define WINDOW_X 0
+#define WINDOW_Y 0
+#define BUTTON_OFFSET 50
+#define BUTTON_DISTANCE 600
+
 HWND WindowHandle;
 HWND leftButton;
 HWND rightButton;
 
 int recording;
+char is_ai;
 FILE* out;
+FILE* labels;
 
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+void RecordMouseLocation(UINT msg, LPARAM lParam);
+void ButtonPressed(WPARAM wParam, LPARAM lParam);
+void MouseClick();
 
 HWND createButton(HWND parentWindow, int x, int y)
 {
@@ -51,7 +61,7 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
     RegisterClassW(&wc);
     WindowHandle = CreateWindowW(wc.lpszClassName, L"Window",
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                100, 100, 800, 600, NULL, NULL, hInstance, NULL);  
+                WINDOW_X, WINDOW_Y, 800, 600, NULL, NULL, hInstance, NULL);  
 
     leftButton = createButton(WindowHandle, 10, 10);
     rightButton = createButton(WindowHandle, 680, 10);
@@ -71,16 +81,28 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
     return (int) msg.wParam;
 }
 
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, 
     LPSTR pCmdLine, int nCmdShow) {
 
-    printf("\npCmdLine: %s", pCmdLine);
-
     recording = 0;
-    out = fopen("MouseData.txt", "w+");
     
+    if(strcmp(pCmdLine, "-ai") == 0)
+    {
+        out = fopen("AI_MouseData.csv", "w+");
+        labels = fopen("AI_MouseLabels.csv", "w+");
+        is_ai = '1';
+    }
+    else
+    {
+        out = fopen("HUMAN_MouseData.csv", "w+");
+        labels = fopen("HUMAN_MouseLabels.csv", "w+");
+        is_ai = '0';
+    }
+
     ezShowWindow(hInstance, nCmdShow);
 }
+
 
 void RecordMouseLocation(UINT msg, LPARAM lParam)
 {
@@ -92,7 +114,9 @@ void RecordMouseLocation(UINT msg, LPARAM lParam)
 
     //fwrite(str, 1, sizeof(str), out);
     fprintf(out, "%s", str);
-    //printf("Coords: %s", str);
+    fputc(is_ai, labels);
+    fputc('\n', labels);
+    printf("Coords: %s", str);
 }
 
 
@@ -126,35 +150,6 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
     }
 }
 
-void MouseDown(POINT* cursorPos)
-{
-    MOUSEINPUT mouseDown = {cursorPos->x, cursorPos->y, 0, MOUSEEVENTF_LEFTDOWN, 0, 0};
-    INPUT down = {INPUT_MOUSE, mouseDown};
-
-    INPUT inputs[1] = {down};
-    SendInput(1, inputs, sizeof(INPUT));
-}
-
-void MouseUp(POINT* cursorPos)
-{
-    MOUSEINPUT mouseUp = {cursorPos->x, cursorPos->y, 0, MOUSEEVENTF_LEFTUP, 0, 0};
-    INPUT up = {INPUT_MOUSE, mouseUp};
-
-    INPUT inputs[1] = {up};
-    SendInput(1, inputs, sizeof(INPUT));
-}
-
-void MouseClick()
-{
-    POINT cursorPos;
-    GetCursorPos(&cursorPos);
-    ScreenToClient(WindowHandle, &cursorPos);
-    printf("\nCursor X = %d Y = %d", cursorPos.x, cursorPos.y);
-    
-    MouseDown(&cursorPos);
-    MouseUp(&cursorPos);
-
-}
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, 
     WPARAM wParam, LPARAM lParam) {
@@ -176,7 +171,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg,
         switch(wParam){
             case VK_SPACE:
                 printf("\nSPACEBAR");
-                MouseClick();
                 break;
         }
         break;
