@@ -1,8 +1,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <Windowsx.h>
+#include <windowsx.h>
 
+HWND WindowHandle;
 HWND leftButton;
 HWND rightButton;
 
@@ -33,7 +34,7 @@ HWND createButton(HWND parentWindow, int x, int y)
 int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
 {
     MSG  msg;    
-    HWND WindowHandle;
+    //HWND WindowHandle;
     WNDCLASSW wc;
 
     wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -54,6 +55,7 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
 
     leftButton = createButton(WindowHandle, 10, 10);
     rightButton = createButton(WindowHandle, 680, 10);
+    EnableWindow(rightButton, FALSE);
 
     printf("\nleftButton = %d", leftButton);
     printf("\nrightButton = %d", rightButton);
@@ -73,7 +75,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR pCmdLine, int nCmdShow) {
 
     printf("\npCmdLine: %s", pCmdLine);
+
     recording = 0;
+    out = fopen("MouseData.txt", "w+");
     
     ezShowWindow(hInstance, nCmdShow);
 }
@@ -83,15 +87,14 @@ void RecordMouseLocation(UINT msg, LPARAM lParam)
     short x = GET_X_LPARAM(lParam);
     short y = GET_Y_LPARAM(lParam);
 
-    printf("\nX = %d Y = %d", x, y);
+    char str[5];
+    sprintf(str, "%d, %d\n", x, y);
+
+    //fwrite(str, 1, sizeof(str), out);
+    fprintf(out, "%s", str);
+    //printf("Coords: %s", str);
 }
 
-void StartRecordingMouse()
-{
-    out = fopen("MouseData.txt", "w+");
-
-    recording = 1;
-}
 
 void ButtonPressed(WPARAM wParam, LPARAM lParam)
 {
@@ -104,13 +107,16 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
             printf("\nLeft Button Pressed.");
             EnableWindow(leftButton, FALSE);
             EnableWindow(rightButton, TRUE);
-            StartRecordingMouse();
+            recording = 1;
         }
         else if((int)lParam == (int)rightButton)
         {
             printf("\nRight Button Pressed.");
             EnableWindow(rightButton, FALSE);
             EnableWindow(leftButton, TRUE);
+            recording = 0;
+            fputc('/', out);
+            fputc('\n', out);
         }
         else
         {
@@ -142,7 +148,7 @@ void MouseClick()
 {
     POINT cursorPos;
     GetCursorPos(&cursorPos);
-
+    ScreenToClient(WindowHandle, &cursorPos);
     printf("\nCursor X = %d Y = %d", cursorPos.x, cursorPos.y);
     
     MouseDown(&cursorPos);
@@ -157,7 +163,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg,
     
     switch(msg) {
       case WM_MOUSEMOVE:
-        RecordMouseLocation(msg, lParam);
+        if(recording == 1)
+        {
+            RecordMouseLocation(msg, lParam);
+        }
         break;
       case WM_COMMAND:
         ButtonPressed(wParam, lParam);
@@ -172,6 +181,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg,
         }
         break;
       case WM_DESTROY:
+          fclose(out);
           PostQuitMessage(0);
           break;
     }
