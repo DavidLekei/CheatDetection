@@ -76,6 +76,7 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+        usleep(17000)
     }
 
     return (int) msg.wParam;

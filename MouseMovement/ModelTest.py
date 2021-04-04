@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import os
 
+DATA_LENGTH = 57
+
 def load_data_array(data, labels, filename):
 	# a = np.array([(0,0)])
 	a = [ ]
@@ -13,22 +15,24 @@ def load_data_array(data, labels, filename):
 				nums = line.split(',')
 				a.append(nums[1])
 			else:
-				print('-----------------------------------------------')
-				print('a at the end of load_data_array')
-				print(a)
-				print('-----------------------------------------------')
+				# print('-----------------------------------------------')
+				# print('a at the end of load_data_array')
+				# print(a)
+				# print('-----------------------------------------------')
 				data.append(np.asarray(a).astype(np.float32))
 				a.clear()
 				line = f.readline()
 				line = line.strip('\n')
 				labels.append(line)
+	if(len(a) > DATA_LENGTH):
+		a = np.resize(a, (1, 57))
+		#print('Resized Array')
 	data.append(np.asarray(a).astype(np.float32))
 	data.pop(0)
-	print('-----------------------------------------------')
-	print('Data at the end of load_data_array')
-	print(data)
-	print('-----------------------------------------------')
-	l = len(data)
+	# print('-----------------------------------------------')
+	# print('Data at the end of load_data_array')
+	# print(data)
+	# print('-----------------------------------------------')
 
 
 def test():
