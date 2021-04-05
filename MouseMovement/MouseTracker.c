@@ -16,6 +16,8 @@ int recording;
 char is_ai;
 FILE* out;
 FILE* labels;
+int record_count;
+int runs;
 
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
@@ -76,7 +78,7 @@ int ezShowWindow(HINSTANCE hInstance, int nCmdShow)
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        usleep(17000)
+        //usleep(17000);
     }
 
     return (int) msg.wParam;
@@ -87,6 +89,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR pCmdLine, int nCmdShow) {
 
     recording = 0;
+    record_count = 0;
+    runs = 0;
     
     if(strcmp(pCmdLine, "-ai") == 0)
     {
@@ -114,8 +118,12 @@ void RecordMouseLocation(UINT msg, LPARAM lParam)
     sprintf(str, "%d, %d\n", x, y);
 
     //fwrite(str, 1, sizeof(str), out);
-    fprintf(out, "%s", str);
-    printf("Coords: %s", str);
+    if(record_count < 57)
+    {
+        fprintf(out, "%s", str);
+        //printf("Coords: %s", str);
+        record_count++;
+    }
 }
 
 
@@ -127,10 +135,12 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
     {
         if((int)lParam == (int)leftButton)
         {
-            printf("\nLeft Button Pressed.");
+            //printf("\nLeft Button Pressed.");
             EnableWindow(leftButton, FALSE);
             EnableWindow(rightButton, TRUE);
             recording = 1;
+            record_count = 0;
+            runs++;
             fputc('/', out);
             fputc('\n', out);
             fputc(is_ai, out);
@@ -138,10 +148,11 @@ void ButtonPressed(WPARAM wParam, LPARAM lParam)
         }
         else if((int)lParam == (int)rightButton)
         {
-            printf("\nRight Button Pressed.");
+            //printf("\nRight Button Pressed.");
             EnableWindow(rightButton, FALSE);
             EnableWindow(leftButton, TRUE);
             recording = 0;
+            printf("\n%d Runs", runs);
         }
         else
         {
